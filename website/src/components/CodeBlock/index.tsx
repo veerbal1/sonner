@@ -25,9 +25,9 @@ const theme = {
       },
     },
     {
-      types: ['atrule', 'keyword', 'attr-name', 'selector'],
+      types: ['atrule', 'keyword', 'attr-name', 'selector', 'string'],
       style: {
-        color: 'var(--gray10)',
+        color: 'var(--gray11)',
       },
     },
     {
@@ -57,7 +57,7 @@ export const CodeBlock = ({ children, initialHeight = 0 }: CodeBlockProps) => {
     setTimeout(() => {
       setCopying((c) => c - 1);
     }, 2000);
-  }, []);
+  }, [children]);
 
   return (
     <div className={styles.outerWrapper}>

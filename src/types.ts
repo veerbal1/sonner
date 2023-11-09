@@ -1,13 +1,13 @@
 import React from 'react';
 
-export type ToastTypes = 'normal' | 'action' | 'success' | 'error' | 'loading';
+export type ToastTypes = 'normal' | 'action' | 'success' | 'info' | 'warning' | 'error' | 'loading';
 
 export type PromiseT<Data = any> = Promise<Data> | (() => Promise<Data>);
 
 export type PromiseData<ToastData = any> = ExternalToast & {
-  loading: string | React.ReactNode;
-  success: string | React.ReactNode | ((data: ToastData) => React.ReactNode | string);
-  error: string | React.ReactNode | ((error: any) => React.ReactNode | string);
+  loading?: string | React.ReactNode;
+  success?: string | React.ReactNode | ((data: ToastData) => React.ReactNode | string);
+  error?: string | React.ReactNode | ((error: any) => React.ReactNode | string);
   finally?: () => void | Promise<void>;
 };
 
@@ -34,7 +34,10 @@ export interface ToastT {
   onDismiss?: (toast: ToastT) => void;
   onAutoClose?: (toast: ToastT) => void;
   promise?: PromiseT;
+  cancelButtonStyle?: React.CSSProperties;
+  actionButtonStyle?: React.CSSProperties;
   style?: React.CSSProperties;
+  unstyled?: boolean;
   className?: string;
   descriptionClassName?: string;
   position?: Position;
@@ -50,7 +53,10 @@ interface ToastOptions {
   className?: string;
   descriptionClassName?: string;
   style?: React.CSSProperties;
+  cancelButtonStyle?: React.CSSProperties;
+  actionButtonStyle?: React.CSSProperties;
   duration?: number;
+  unstyled?: boolean;
 }
 
 export interface ToasterProps {
@@ -61,6 +67,7 @@ export interface ToasterProps {
   richColors?: boolean;
   expand?: boolean;
   duration?: number;
+  gap?: number;
   visibleToasts?: number;
   closeButton?: boolean;
   toastOptions?: ToastOptions;
@@ -68,6 +75,7 @@ export interface ToasterProps {
   style?: React.CSSProperties;
   offset?: string | number;
   dir?: 'rtl' | 'ltr' | 'auto';
+  loadingIcon?: React.ReactNode;
 }
 
 export enum SwipeStateTypes {

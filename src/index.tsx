@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 
 import './styles.css';
 import { getAsset, Loader } from './assets';
-import { HeightT, Position, ToastT, ToastToDismiss, ExternalToast, ToasterProps } from './types';
+import type { HeightT, Position, ToastT, ToastToDismiss, ExternalToast, ToasterProps } from './types';
 import { ToastState, toast } from './state';
 
 // Visible toasts amount
@@ -36,15 +36,20 @@ interface ToastProps {
   heights: HeightT[];
   setHeights: React.Dispatch<React.SetStateAction<HeightT[]>>;
   removeToast: (toast: ToastT) => void;
+  gap?: number;
   position: Position;
   visibleToasts: number;
   expandByDefault: boolean;
   closeButton: boolean;
   interacting: boolean;
   style?: React.CSSProperties;
+  cancelButtonStyle?: React.CSSProperties;
+  actionButtonStyle?: React.CSSProperties;
   duration?: number;
   className?: string;
+  unstyled?: boolean;
   descriptionClassName?: string;
+  loadingIcon?: React.ReactNode;
 }
 
 const Toast = (props: ToastProps) => {
@@ -61,10 +66,14 @@ const Toast = (props: ToastProps) => {
     removeToast,
     closeButton,
     style,
+    cancelButtonStyle,
+    actionButtonStyle,
     className = '',
     descriptionClassName = '',
     duration: durationFromToaster,
     position,
+    gap = GAP,
+    loadingIcon: loadingIconProp,
     expandByDefault,
   } = props;
   const [mounted, setMounted] = React.useState(false);
@@ -110,7 +119,7 @@ const Toast = (props: ToastProps) => {
   const invert = toast.invert || ToasterInvert;
   const disabled = toastType === 'loading';
 
-  offset.current = React.useMemo(() => heightIndex * GAP + toastsHeightBefore, [heightIndex, toastsHeightBefore]);
+  offset.current = React.useMemo(() => heightIndex * gap + toastsHeightBefore, [heightIndex, toastsHeightBefore]);
 
   React.useEffect(() => {
     // Trigger enter animation without using CSS animation
@@ -151,14 +160,14 @@ const Toast = (props: ToastProps) => {
   React.useEffect(() => {
     if ((toast.promise && toastType === 'loading') || toast.duration === Infinity) return;
     let timeoutId: NodeJS.Timeout;
-
+    let remainingTime = duration;
     // Pause the timer on each hover
     const pauseTimer = () => {
       if (lastCloseTimerStartTimeRef.current < closeTimerStartTimeRef.current) {
         // Get the elapsed time since the timer started
         const elapsedTime = new Date().getTime() - closeTimerStartTimeRef.current;
 
-        closeTimerRemainingTimeRef.current = closeTimerRemainingTimeRef.current - elapsedTime;
+        remainingTime = remainingTime - elapsedTime;
       }
 
       lastCloseTimerStartTimeRef.current = new Date().getTime();
@@ -166,11 +175,12 @@ const Toast = (props: ToastProps) => {
 
     const startTimer = () => {
       closeTimerStartTimeRef.current = new Date().getTime();
+
       // Let the toast know it has started
       timeoutId = setTimeout(() => {
         toast.onAutoClose?.(toast);
         deleteToast();
-      }, closeTimerRemainingTimeRef.current);
+      }, remainingTime);
     };
 
     if (expanded || interacting) {
@@ -202,6 +212,17 @@ const Toast = (props: ToastProps) => {
     }
   }, [deleteToast, toast.delete]);
 
+  function getLoadingIcon() {
+    if (loadingIconProp) {
+      return (
+        <div className="loader" data-visible={toastType === 'loading'}>
+          {loadingIconProp}
+        </div>
+      );
+    }
+    return <Loader visible={toastType === 'loading'} />;
+  }
+
   return (
     <li
       aria-live={toast.important ? 'assertive' : 'polite'}
@@ -211,7 +232,7 @@ const Toast = (props: ToastProps) => {
       ref={toastRef}
       className={className + ' ' + toastClassname}
       data-sonner-toast=""
-      data-styled={!Boolean(toast.jsx)}
+      data-styled={!Boolean(toast.jsx || toast.unstyled)}
       data-mounted={mounted}
       data-promise={Boolean(toast.promise)}
       data-removed={removed}
@@ -294,7 +315,7 @@ const Toast = (props: ToastProps) => {
           data-close-button
           onClick={
             disabled || !dismissible
-              ? undefined
+              ? () => {}
               : () => {
                   deleteToast();
                   toast.onDismiss?.(toast);
@@ -323,7 +344,7 @@ const Toast = (props: ToastProps) => {
         <>
           {toastType || toast.icon || toast.promise ? (
             <div data-icon="">
-              {toast.promise || toast.type === 'loading' ? <Loader visible={toastType === 'loading'} /> : null}
+              {(toast.promise || toast.type === 'loading') && !toast.icon ? getLoadingIcon() : null}
               {toast.icon || getAsset(toastType)}
             </div>
           ) : null}
@@ -340,6 +361,7 @@ const Toast = (props: ToastProps) => {
             <button
               data-button
               data-cancel
+              style={toast.cancelButtonStyle || cancelButtonStyle}
               onClick={() => {
                 if (!dismissible) return;
                 deleteToast();
@@ -354,6 +376,7 @@ const Toast = (props: ToastProps) => {
           {toast.action ? (
             <button
               data-button=""
+              style={toast.actionButtonStyle || actionButtonStyle}
               onClick={(event) => {
                 toast.action?.onClick(event);
                 if (event.defaultPrevented) return;
@@ -397,6 +420,8 @@ const Toaster = (props: ToasterProps) => {
     visibleToasts = VISIBLE_TOASTS_AMOUNT,
     toastOptions,
     dir = getDocumentDirection(),
+    gap,
+    loadingIcon,
   } = props;
   const [toasts, setToasts] = React.useState<ToastT[]>([]);
   const possiblePositions = React.useMemo(() => {
@@ -605,11 +630,15 @@ const Toaster = (props: ToasterProps) => {
                   interacting={interacting}
                   position={position}
                   style={toastOptions?.style}
+                  cancelButtonStyle={toastOptions?.cancelButtonStyle}
+                  actionButtonStyle={toastOptions?.actionButtonStyle}
                   removeToast={removeToast}
                   toasts={toasts}
                   heights={heights}
                   setHeights={setHeights}
                   expandByDefault={expand}
+                  gap={gap}
+                  loadingIcon={loadingIcon}
                   expanded={expanded}
                 />
               ))}

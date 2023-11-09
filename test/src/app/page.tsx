@@ -90,6 +90,20 @@ export default function Home({ searchParams }: any) {
       >
         Render Custom Toast
       </button>
+      <button
+        data-testid="custom-cancel-button-toast"
+        className="button"
+        onClick={() =>
+          toast('My Custom Cancel Button', {
+            cancel: {
+              label: 'Cancel',
+              onClick: () => console.log('Cancel'),
+            },
+          })
+        }
+      >
+        Render Custom Cancel Button
+      </button>
       <button data-testid="infinity-toast" className="button" onClick={() => toast('My Toast', { duration: Infinity })}>
         Render Infinity Toast
       </button>
@@ -132,8 +146,8 @@ export default function Home({ searchParams }: any) {
         onClick={() => {
           const toastId = toast('My Unupdated Toast', {
             duration: 10000,
-        });
-        toast('My Updated Toast', {
+          });
+          toast('My Updated Toast', {
             id: toastId,
             duration: 10000,
           });
@@ -143,7 +157,15 @@ export default function Home({ searchParams }: any) {
       </button>
       {showAutoClose ? <div data-testid="auto-close-el" /> : null}
       {showDismiss ? <div data-testid="dismiss-el" /> : null}
-      <Toaster position={searchParams.position || 'bottom-right'} theme={theme} dir={searchParams.dir || 'auto'} />
+      <Toaster
+        position={searchParams.position || 'bottom-right'}
+        toastOptions={{
+          actionButtonStyle: { backgroundColor: 'rgb(219, 239, 255)' },
+          cancelButtonStyle: { backgroundColor: 'rgb(254, 226, 226)' },
+        }}
+        theme={theme}
+        dir={searchParams.dir || 'auto'}
+      />
     </>
   );
 }
